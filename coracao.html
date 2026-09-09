@@ -20,7 +20,87 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       color: #fff;
       overflow: hidden;
+      padding: 20px;
+    }
+
+    /* Container com a borda branca animada */
+    .moldura-animada {
       position: relative;
+      width: 100%;
+      height: calc(100vh - 40px);
+      max-width: 1200px;
+      border-radius: 28px;
+      padding: 3px;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 0 35px rgba(255, 255, 255, 0.18), 0 0 80px rgba(168, 85, 247, 0.25);
+    }
+
+    /* Luz giratória branca que cria o efeito de traço correndo na borda */
+    .moldura-animada::before {
+      content: '';
+      position: absolute;
+      width: 200%;
+      height: 200%;
+      background: conic-gradient(
+        transparent,
+        rgba(255, 255, 255, 0.1) 15%,
+        #ffffff 25%,
+        rgba(255, 255, 255, 0.2) 35%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.1) 65%,
+        #ffffff 75%,
+        rgba(255, 255, 255, 0.2) 85%,
+        transparent 100%
+      );
+      animation: girarBorda 6s linear infinite;
+    }
+
+    /* Segunda camada de brilho pulsante */
+    .moldura-animada::after {
+      content: '';
+      position: absolute;
+      inset: 2px;
+      border-radius: 26px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      pointer-events: none;
+      z-index: 3;
+      animation: pulsarBorda 2.4s ease-in-out infinite alternate;
+    }
+
+    @keyframes girarBorda {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes pulsarBorda {
+      0% {
+        box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+      100% {
+        box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.45);
+        border-color: rgba(255, 255, 255, 0.85);
+      }
+    }
+
+    /* Interior escuro onde o coração e o canvas rodam */
+    .conteudo-interior {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #040207;
+      border-radius: 25px;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
     canvas {
@@ -37,14 +117,13 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%);
+      transform: translate(-50%, -46%) scale(0.92);
       z-index: 2;
       text-align: center;
       width: min(90%, 340px);
       pointer-events: none;
       opacity: 0;
-      transition: opacity 2.2s cubic-bezier(0.4, 0, 0.2, 1), transform 2.2s cubic-bezier(0.4, 0, 0.2, 1);
-      transform: translate(-50%, -46%) scale(0.92);
+      transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .conteudo-centro.visivel {
@@ -70,27 +149,32 @@
 </head>
 <body>
 
-  <canvas id="canvas"></canvas>
+  <!-- Estrutura da borda animada -->
+  <div class="moldura-animada">
+    <div class="conteudo-interior" id="areaInterna">
+      <canvas id="canvas"></canvas>
 
-  <div class="conteudo-centro" id="textoCentro">
-    <h1>Eu sabia! 💜</h1>
-    <p>O meu coração bate muito mais feliz por você.</p>
+      <div class="conteudo-centro" id="textoCentro">
+        <h1>Eu sabia! 💜</h1>
+        <p>O meu coração bate muito mais feliz por você.</p>
+      </div>
+    </div>
   </div>
 
   <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     const textoCentro = document.getElementById('textoCentro');
+    const areaInterna = document.getElementById('areaInterna');
 
     let largura, altura;
     function redimensionar() {
-      largura = canvas.width = window.innerWidth;
-      altura = canvas.height = window.innerHeight;
+      largura = canvas.width = areaInterna.clientWidth;
+      altura = canvas.height = areaInterna.clientHeight;
     }
     redimensionar();
     window.addEventListener('resize', redimensionar);
 
-    // Equação paramétrica do contorno do coração
     function bordaCoracao(t, escala) {
       const x = 16 * Math.pow(Math.sin(t), 3);
       const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
@@ -111,15 +195,12 @@
 
     for (let i = 0; i < totalParticulas; i++) {
       const t = Math.PI * 2 * (i / totalParticulas);
-      
-      // Cerca de 65% na borda e 35% no preenchimento interno para dar densidade
       const ehBorda = Math.random() > 0.35;
       const fatorPreenchimento = ehBorda ? 1 : Math.sqrt(Math.random()) * 0.92;
 
       particulas.push({
         t: t,
         fator: fatorPreenchimento,
-        // Posição inicial bem dispersa e distante
         x: (Math.random() - 0.5) * window.innerWidth * 2 + window.innerWidth / 2,
         y: (Math.random() - 0.5) * window.innerHeight * 2 + window.innerHeight / 2,
         raio: Math.random() * 1.8 + 1.2,
@@ -134,18 +215,15 @@
     let animacaoCompleta = false;
 
     function animar() {
-      // Rastro suave
       ctx.fillStyle = 'rgba(4, 2, 7, 0.25)';
       ctx.fillRect(0, 0, largura, altura);
 
-      tempo += 0.016; // Avanço de tempo mais lento
+      tempo += 0.024;
       const centroX = largura / 2;
-      const centroY = altura / 2 - 15; // Leve ajuste no centro do coração
+      const centroY = altura / 2 - 15;
 
-      // Escala responsiva proporcional à tela
       const escalaBase = Math.min(largura, altura) / 32;
-      // Pulso suave que só começa após o formato se consolidar
-      const pulso = tempo > 4.5 ? Math.sin(tempo * 2.8) * 0.9 : 0;
+      const pulso = tempo > 1.8 ? Math.sin(tempo * 3.5) * 0.9 : 0;
       const escalaAtual = escalaBase + pulso;
 
       for (let i = 0; i < particulas.length; i++) {
@@ -155,7 +233,6 @@
         const alvoX = centroX + (pontoBorda.x * p.fator) + p.dispersaoX;
         const alvoY = centroY + (pontoBorda.y * p.fator) + p.dispersaoY;
 
-        // Convergência mais lenta e suave (fator 0.018 ao invés de 0.045)
         p.x += (alvoX - p.x) * 0.06;
         p.y += (alvoY - p.y) * 0.06;
 
@@ -167,8 +244,7 @@
         ctx.fill();
       }
 
-      // Mostra o texto quando as partículas já estiverem bem próximas do coração
-      if (tempo > 4.0 && !animacaoCompleta) {
+      if (tempo > 1.5 && !animacaoCompleta) {
         animacaoCompleta = true;
         textoCentro.classList.add('visivel');
       }
