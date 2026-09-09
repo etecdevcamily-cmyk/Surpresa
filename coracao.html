@@ -13,12 +13,11 @@
 
     body {
       min-height: 100vh;
-      background: #000;
+      background: #040207;
       display: flex;
-      flex-direction: column;
       justify-content: center;
       align-items: center;
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       color: #fff;
       overflow: hidden;
       position: relative;
@@ -33,34 +32,39 @@
       z-index: 1;
     }
 
-    .mensagem {
-      position: relative;
+    /* Texto centralizado perfeitamente dentro do coração */
+    .conteudo-centro {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       z-index: 2;
       text-align: center;
-      margin-top: 360px;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 1.4s ease, transform 1.4s ease;
+      width: min(90%, 340px);
       pointer-events: none;
-      padding: 0 20px;
+      opacity: 0;
+      transition: opacity 2.2s cubic-bezier(0.4, 0, 0.2, 1), transform 2.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: translate(-50%, -46%) scale(0.92);
     }
 
-    .mensagem.visivel {
+    .conteudo-centro.visivel {
       opacity: 1;
-      transform: translateY(0);
+      transform: translate(-50%, -50%) scale(1);
     }
 
-    .mensagem h1 {
-      font-size: clamp(2rem, 5vw, 3rem);
-      color: #c084fc;
-      text-shadow: 0 0 25px rgba(168, 85, 247, 0.8);
+    .conteudo-centro h1 {
+      font-size: clamp(1.8rem, 4.5vw, 2.5rem);
+      color: #f3e8ff;
+      text-shadow: 0 0 20px rgba(192, 132, 252, 0.9), 0 0 40px rgba(147, 51, 234, 0.7);
       margin-bottom: 8px;
+      letter-spacing: 0.5px;
     }
 
-    .mensagem p {
-      font-size: 1.15rem;
+    .conteudo-centro p {
+      font-size: clamp(0.95rem, 2.5vw, 1.15rem);
       color: #e9d5ff;
-      letter-spacing: 0.5px;
+      line-height: 1.45;
+      text-shadow: 0 0 15px rgba(0, 0, 0, 0.9);
     }
   </style>
 </head>
@@ -68,7 +72,7 @@
 
   <canvas id="canvas"></canvas>
 
-  <div class="mensagem" id="mensagem">
+  <div class="conteudo-centro" id="textoCentro">
     <h1>Eu sabia! 💜</h1>
     <p>O meu coração bate muito mais feliz por você.</p>
   </div>
@@ -76,7 +80,7 @@
   <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    const mensagem = document.getElementById('mensagem');
+    const textoCentro = document.getElementById('textoCentro');
 
     let largura, altura;
     function redimensionar() {
@@ -86,68 +90,87 @@
     redimensionar();
     window.addEventListener('resize', redimensionar);
 
-    // Fórmula paramétrica do coração
-    function posicaoCoracao(t, escala) {
+    // Equação paramétrica do contorno do coração
+    function bordaCoracao(t, escala) {
       const x = 16 * Math.pow(Math.sin(t), 3);
       const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
       return { x: x * escala, y: y * escala };
     }
 
-    const totalParticulas = 480;
+    const totalParticulas = 1400;
     const particulas = [];
-    const cores = ['#a855f7', '#c084fc', '#d8b4fe', '#9333ea', '#e9d5ff'];
+    const paleta = [
+      '#c084fc',
+      '#a855f7',
+      '#9333ea',
+      '#e9d5ff',
+      '#f3e8ff',
+      '#7e22ce',
+      '#d8b4fe'
+    ];
 
     for (let i = 0; i < totalParticulas; i++) {
       const t = Math.PI * 2 * (i / totalParticulas);
+      
+      // Cerca de 65% na borda e 35% no preenchimento interno para dar densidade
+      const ehBorda = Math.random() > 0.35;
+      const fatorPreenchimento = ehBorda ? 1 : Math.sqrt(Math.random()) * 0.92;
+
       particulas.push({
         t: t,
-        // Posição inicial espalhada aleatória
-        x: (Math.random() - 0.5) * window.innerWidth * 1.5 + window.innerWidth / 2,
-        y: (Math.random() - 0.5) * window.innerHeight * 1.5 + window.innerHeight / 2,
-        vx: 0,
-        vy: 0,
-        raio: Math.random() * 2 + 1.6,
-        cor: cores[Math.floor(Math.random() * cores.length)],
-        dispersao: (Math.random() - 0.5) * 8
+        fator: fatorPreenchimento,
+        // Posição inicial bem dispersa e distante
+        x: (Math.random() - 0.5) * window.innerWidth * 2 + window.innerWidth / 2,
+        y: (Math.random() - 0.5) * window.innerHeight * 2 + window.innerHeight / 2,
+        raio: Math.random() * 1.8 + 1.2,
+        cor: paleta[Math.floor(Math.random() * paleta.length)],
+        dispersaoX: (Math.random() - 0.5) * 6,
+        dispersaoY: (Math.random() - 0.5) * 6,
+        brilho: Math.random() * 12 + 6
       });
     }
 
     let tempo = 0;
-    const centroY_offset = -40; // sobe o coração para dar espaço ao texto
+    let animacaoCompleta = false;
 
     function animar() {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+      // Rastro suave
+      ctx.fillStyle = 'rgba(4, 2, 7, 0.25)';
       ctx.fillRect(0, 0, largura, altura);
 
-      tempo += 0.03;
+      tempo += 0.016; // Avanço de tempo mais lento
       const centroX = largura / 2;
-      const centroY = altura / 2 + centroY_offset;
+      const centroY = altura / 2 - 15; // Leve ajuste no centro do coração
 
-      // Escala com pulso suave após formar o formato
-      const fatorEscala = Math.min(largura, altura) / 36;
-      const pulso = tempo > 3 ? Math.sin(tempo * 4) * 0.8 : 0;
-      const escalaAtual = fatorEscala + pulso;
+      // Escala responsiva proporcional à tela
+      const escalaBase = Math.min(largura, altura) / 32;
+      // Pulso suave que só começa após o formato se consolidar
+      const pulso = tempo > 4.5 ? Math.sin(tempo * 2.8) * 0.9 : 0;
+      const escalaAtual = escalaBase + pulso;
 
-      particulas.forEach((p) => {
-        const alvo = posicaoCoracao(p.t, escalaAtual);
-        const alvoX = centroX + alvo.x + p.dispersao;
-        const alvoY = centroY + alvo.y + p.dispersao;
+      for (let i = 0; i < particulas.length; i++) {
+        const p = particulas[i];
+        const pontoBorda = bordaCoracao(p.t, escalaAtual);
 
-        // Movimento suave das partículas em direção ao coração
-        p.x += (alvoX - p.x) * 0.045;
-        p.y += (alvoY - p.y) * 0.045;
+        const alvoX = centroX + (pontoBorda.x * p.fator) + p.dispersaoX;
+        const alvoY = centroY + (pontoBorda.y * p.fator) + p.dispersaoY;
+
+        // Convergência mais lenta e suave (fator 0.018 ao invés de 0.045)
+        p.x += (alvoX - p.x) * 0.018;
+        p.y += (alvoY - p.y) * 0.018;
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.raio, 0, Math.PI * 2);
         ctx.fillStyle = p.cor;
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = p.brilho;
         ctx.shadowColor = p.cor;
         ctx.fill();
-      });
+      }
 
-      // Revela o texto assim que o formato estiver pronto
-      if (tempo > 2.5) {
-        mensagem.classList.add('visivel');
+      // Mostra o texto quando as partículas já estiverem bem próximas do coração
+      if (tempo > 4.0 && !animacaoCompleta) {
+        animacaoCompleta = true;
+        textoCentro.classList.add('visivel');
       }
 
       requestAnimationFrame(animar);
