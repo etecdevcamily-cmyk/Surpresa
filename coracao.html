@@ -156,8 +156,8 @@
         const alvoY = centroY + (pontoBorda.y * p.fator) + p.dispersaoY;
 
         // Convergência mais lenta e suave (fator 0.018 ao invés de 0.045)
-        p.x += (alvoX - p.x) * 0.018;
-        p.y += (alvoY - p.y) * 0.018;
+        p.x += (alvoX - p.x) * 0.012;
+        p.y += (alvoY - p.y) * 0.012;
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.raio, 0, Math.PI * 2);
