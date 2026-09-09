@@ -55,7 +55,7 @@
         rgba(255, 255, 255, 0.2) 85%,
         transparent 100%
       );
-      animation: girarBorda 6s linear infinite;
+      animation: girarBorda 5s linear infinite;
     }
 
     /* Segunda camada de brilho pulsante */
@@ -67,7 +67,7 @@
       border: 1px solid rgba(255, 255, 255, 0.35);
       pointer-events: none;
       z-index: 3;
-      animation: pulsarBorda 2.4s ease-in-out infinite alternate;
+      animation: pulsarBorda 2s ease-in-out infinite alternate;
     }
 
     @keyframes girarBorda {
@@ -123,7 +123,8 @@
       width: min(90%, 340px);
       pointer-events: none;
       opacity: 0;
-      transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      /* Entrada rápida do texto */
+      transition: opacity 0.5s ease-out, transform 0.5s ease-out;
     }
 
     .conteudo-centro.visivel {
@@ -215,15 +216,16 @@
     let animacaoCompleta = false;
 
     function animar() {
-      ctx.fillStyle = 'rgba(4, 2, 7, 0.25)';
+      ctx.fillStyle = 'rgba(4, 2, 7, 0.28)';
       ctx.fillRect(0, 0, largura, altura);
 
-      tempo += 0.024;
+      tempo += 0.045; // Relógio acelerado
       const centroX = largura / 2;
       const centroY = altura / 2 - 15;
 
       const escalaBase = Math.min(largura, altura) / 32;
-      const pulso = tempo > 1.8 ? Math.sin(tempo * 3.5) * 0.9 : 0;
+      // Começa o batimento bem antes
+      const pulso = tempo > 0.8 ? Math.sin(tempo * 4.2) * 1.1 : 0;
       const escalaAtual = escalaBase + pulso;
 
       for (let i = 0; i < particulas.length; i++) {
@@ -233,8 +235,9 @@
         const alvoX = centroX + (pontoBorda.x * p.fator) + p.dispersaoX;
         const alvoY = centroY + (pontoBorda.y * p.fator) + p.dispersaoY;
 
-        p.x += (alvoX - p.x) * 0.06;
-        p.y += (alvoY - p.y) * 0.06;
+        // Atração acelerada (0.14) para formar a figura num piscar de olhos
+        p.x += (alvoX - p.x) * 0.14;
+        p.y += (alvoY - p.y) * 0.14;
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.raio, 0, Math.PI * 2);
@@ -244,7 +247,8 @@
         ctx.fill();
       }
 
-      if (tempo > 1.5 && !animacaoCompleta) {
+      // O texto aparece aos ~0.7 segundos
+      if (tempo > 0.7 && !animacaoCompleta) {
         animacaoCompleta = true;
         textoCentro.classList.add('visivel');
       }
